@@ -36,6 +36,16 @@ void initializeBody(Body *body, const Genome_t& genome){
     newCell(body, 0, 0, 0, 0);
 }
 
+void reuseBody(Body *body, const Genome_t& genome){
+    if(!(body->cells)){
+        initializeBody(body, genome);
+    } else{
+        body->currentOccupation = -1;
+        body->genome = genome;
+        newCell(body, 0, 0, 0, 0);
+    }
+}
+
 void deleteBody(Body *body){
     delete body->cells;
     body->currentOccupation=0;
