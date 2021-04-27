@@ -65,6 +65,8 @@ void initializeBody(Body *body, const Genome_t& genome);
 
 void reuseBody(Body *body, const Genome_t& genome);
 
+void copyBody(Body *dest, Body *src);
+
 void deleteBody(Body *body);
 
 Cell* findCellByIndices(Body* body, int8_t x, int8_t y, int8_t z);
