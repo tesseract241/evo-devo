@@ -23,12 +23,12 @@ struct Genome_t{
     struct {
         //Each gene contains the amplitude that the cell generates for its field, which type it will transition to if exposed to this field, and the threshold above/below which the transition happens, the direction to spawn a new cell, and the threshold associated with it
         struct {
+            uint8_t     permeability;       // permeability to this field
             int8_t      amplitude;          // intensity of the field pulse generated
-            uint8_t     nextType;           // type to transition to
             int8_t      changeThreshold;    // threshold to instigate the transition
             int8_t      spawnThreshold;     // threshold to spawn a new cell
+            uint8_t     nextType;           // type to transition to
             Direction   direction;          // direction in which to spawn a new cell
-            uint8_t     permeability;       // permeability to this field
         } gene[fieldsNumber];
     } autosome[cellsTypes];
     struct{
