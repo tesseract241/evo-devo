@@ -61,6 +61,8 @@ struct Body{
     std::unordered_map<uint32_t, uint32_t> indicesToCell;
 };
 
+void generateGenome(Genome_t *genome);
+
 void initializeBody(Body *body, const Genome_t& genome);
 
 void reuseBody(Body *body, const Genome_t& genome);

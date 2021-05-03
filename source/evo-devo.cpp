@@ -1,7 +1,19 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <random>
 #include <evo-devo.hpp>
+
+const Direction directions[8] = {
+         RIGHT,
+         LEFT,
+         UP,
+         DOWN,
+         FORWARD,
+         BACK,
+         OUTWARDS,
+         INWARDS
+};
 
 Cell* findCellByIndices(Body* body, int8_t x, int8_t y, int8_t z){
     auto neighbour = body->indicesToCell.find((uint8_t(z)<<16) | (uint8_t(y)<<8) | uint8_t(x));
@@ -25,6 +37,32 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
     std::memcpy(&(cell->type), dummy, 4);
     body->indicesToCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = body->currentOccupation;
     return cell;
+}
+
+void generateGenome(Genome_t *genome){
+    std::random_device rd;  
+    std::mt19937 gen(rd()); 
+    std::uniform_int_distribution<uint64_t> dis64(0, UINT64_MAX);
+    std::uniform_int_distribution<uint32_t> dis32(0, UINT32_MAX);
+    std::uniform_int_distribution<uint8_t> dist(0, cellsTypes-1);
+    std::uniform_int_distribution<uint8_t> dis8(0, UINT8_MAX);
+    std::uniform_int_distribution<uint8_t> disd(0, 7);
+    div_t div = std::div(fieldsNumber, sizeof(uint64_t));
+    for(int i=0;i<cellsTypes;++i){
+        for(int j=0;j<fieldsNumber;++j){
+            uint32_t *ptr = (uint32_t*)(genome->autosome[i].gene + j);
+            *ptr = dis32(gen);
+            genome->autosome[i].gene[j].nextType = dist(gen);
+            genome->autosome[i].gene[j].direction = directions[disd(gen)];
+        }
+    }
+    for(int i=0;i<div.quot;++i){
+        uint64_t *ptr = (uint64_t*)(genome->allosome.mass+i*sizeof(uint64_t));
+        *ptr = dis64(gen);
+    }
+    for(int i=0;i<div.rem;++i){
+        genome->allosome.mass[div.quot*sizeof(uint64_t)+i] = dis8(gen);
+    }
 }
 
 void initializeBody(Body *body, const Genome_t& genome){
