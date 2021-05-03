@@ -302,7 +302,7 @@ void mutate(Genome_t *genome, float mutationProbability){
                 if(currentDirection>7){
                     currentDirection-=2;
                 }
-                genome->autosome[i].gene[j].direction = directions[currentDirection+2*disb(gen)-1];
+                genome->autosome[i].gene[j].direction = directions[(currentDirection+2*disb(gen)-1)%8];
             }
         }
     }
@@ -326,4 +326,22 @@ void developBody(Body* body){
     for(int i=0;i<body->currentOccupation;++i){
         checkForSpawn(body, body->cells+i);
     }
+}
+
+int geneticDistance(const Genome_t& first, const Genome_t& second){
+    int sum = 0;
+    for(int i=0;i<cellsTypes;++i){
+        for(int j=0;j<fieldsNumber;++j){
+            sum+=(first.autosome[i].gene[j].permeability - second.autosome[i].gene[j].permeability)*(first.autosome[i].gene[j].permeability - second.autosome[i].gene[j].permeability);
+            sum+=(first.autosome[i].gene[j].amplitude - second.autosome[i].gene[j].amplitude)*(first.autosome[i].gene[j].amplitude - second.autosome[i].gene[j].amplitude);
+            sum+=(first.autosome[i].gene[j].changeThreshold - second.autosome[i].gene[j].changeThreshold)*(first.autosome[i].gene[j].changeThreshold - second.autosome[i].gene[j].changeThreshold);
+            sum+=(first.autosome[i].gene[j].spawnThreshold - second.autosome[i].gene[j].spawnThreshold)*(first.autosome[i].gene[j].spawnThreshold - second.autosome[i].gene[j].spawnThreshold);
+            sum+=(first.autosome[i].gene[j].nextType != second.autosome[i].gene[j].nextType) ? UINT8_MAX*UINT8_MAX : 0;
+            sum+=(first.autosome[i].gene[j].direction != second.autosome[i].gene[j].direction) ? UINT8_MAX*UINT8_MAX : 0;
+        }
+    }
+    for(int j=0;j<fieldsNumber;++j){
+        sum+=(first.allosome.mass[j] - second.allosome.mass[j])*(first.allosome.mass[j] - second.allosome.mass[j]);
+    }
+    return sum;
 }

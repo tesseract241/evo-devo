@@ -89,3 +89,5 @@ void mutateGenome(Genome_t *genome, float mutationProbability);
 //Executes a complete cycle of pulse field -> diffuse -> speciation -> spawn for all cells in the body
 //You shouldn't need to use the individual functions in most cases
 void developBody(Body* body);
+
+int geneticDistance(const Genome_t& first, const Genome_t& second);
