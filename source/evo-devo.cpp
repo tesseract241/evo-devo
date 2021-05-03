@@ -279,6 +279,40 @@ int sanitizeGenome(Genome_t *genome){
     return 0;
 }
 
+void mutate(Genome_t *genome, float mutationProbability){
+    std::random_device rd;  
+    std::mt19937 gen(rd()); 
+    std::uniform_real_distribution<float> prob(0, 1);
+    std::uniform_int_distribution<uint8_t> dist(0, cellsTypes-1);
+    std::uniform_int_distribution<uint8_t> dis8(0, 7);
+    std::uniform_int_distribution<uint8_t> disb(0, 1);
+    for(int i=0;i<cellsTypes;++i){
+        for(int j=0;j<fieldsNumber;++j){
+            uint8_t *ptr = (uint8_t*) &(genome->autosome[i].gene[j]);
+            for(int k=0;k<4;++k){
+                if(prob(gen)<mutationProbability){
+                    ptr[k]^=(1<<dis8(gen));
+                }
+            }
+            if(prob(gen)<mutationProbability){
+                genome->autosome[i].gene[j].nextType = dist(gen);
+            }
+            if(prob(gen)<mutationProbability){
+                uint8_t currentDirection = genome->autosome[i].gene[j].direction;
+                if(currentDirection>7){
+                    currentDirection-=2;
+                }
+                genome->autosome[i].gene[j].direction = directions[currentDirection+2*disb(gen)-1];
+            }
+        }
+    }
+    for(int i=0;i<fieldsNumber;++i){
+        if(prob(gen)<mutationProbability){
+            genome->allosome.mass[i]^=(1<<dis8(gen));
+        }
+    }
+}
+
 void developBody(Body* body){
     for(int i=0;i<body->currentOccupation;++i){
         checkForPulse(body, body->cells+i);

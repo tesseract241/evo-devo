@@ -84,6 +84,8 @@ void checkForSpawn(Body *body, Cell* me);
 //Erases the uncoding bits in directions, returns 0 for working genomes and -1 for defective ones.
 int sanitizeGenome(Genome_t *genome);
 
+void mutateGenome(Genome_t *genome, float mutationProbability);
+
 //Executes a complete cycle of pulse field -> diffuse -> speciation -> spawn for all cells in the body
 //You shouldn't need to use the individual functions in most cases
 void developBody(Body* body);
