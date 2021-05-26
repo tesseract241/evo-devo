@@ -279,7 +279,7 @@ int sanitizeGenome(Genome_t *genome){
     return 0;
 }
 
-void mutate(Genome_t *genome, float mutationProbability){
+void mutateGenome(Genome_t *genome, float mutationProbability){
     std::random_device rd;  
     std::mt19937 gen(rd()); 
     std::uniform_real_distribution<float> prob(0, 1);
