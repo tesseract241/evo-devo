@@ -84,11 +84,16 @@ void reuseBody(Body *body, const Genome_t& genome){
     }
 }
 
-void swapBody(Body* reuse, Body* hold){
-    Cell *dummy = hold->cells;
-    std::memcpy(hold, reuse, sizeof(reuse->currentOccupation) + sizeof(reuse->currentSize) + sizeof(reuse->cells) + sizeof(Genome_t));
-    hold->indicesToCell = std::move(reuse->indicesToCell);
-    reuse->cells = dummy;
+void copyBody(Body* dest, Body* src){
+    if(dest->currentSize < src->currentSize){
+        delete dest->cells;
+        dest->cells = new Cell[src->currentSize];
+    }
+    std::memcpy(dest->cells, src->cells, src->currentOccupation * sizeof(Cell));
+    dest->currentOccupation = src->currentOccupation;
+    dest->currentSize = src->currentSize;
+    std::memcpy(&(dest->genome), &(src->genome), sizeof(Genome_t));
+    dest->indicesToCell = src->indicesToCell;
 }
 
 void deleteBody(Body *body){

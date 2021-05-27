@@ -67,7 +67,7 @@ void initializeBody(Body *body, const Genome_t& genome);
 
 void reuseBody(Body *body, const Genome_t& genome);
 
-void swapBody(Body* reuse, Body* hold);
+void copyBody(Body* dest, Body* src);
 
 void deleteBody(Body *body);
 
