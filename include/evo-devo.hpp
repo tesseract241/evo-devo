@@ -5,6 +5,8 @@
 const int fieldsNumber  = 14;   //We want a multiple of 4 + 2 to make the Cell struct tightly packed
 const int cellsTypes    = 32;
 
+typedef int64_t RelativeCellIndex; 
+
 enum Direction{
     RIGHT       = 0,    //0000
     LEFT        = 1,    //0001
@@ -38,12 +40,12 @@ struct Genome_t{
 
 struct Cell {
     //6*8 bytes = 48 bytes
-    Cell *right;
-    Cell *left;
-    Cell *up;
-    Cell *down;
-    Cell *forward;
-    Cell *back;
+     RelativeCellIndex right;
+     RelativeCellIndex left;
+     RelativeCellIndex up;
+     RelativeCellIndex down;
+     RelativeCellIndex forward;
+     RelativeCellIndex back;
     
     //4*1 bytes = 4 bytes
     uint8_t type;
@@ -71,15 +73,15 @@ void copyBody(Body* dest, Body* src);
 
 void deleteBody(Body *body);
 
-Cell* findCellByIndices(Body* body, int8_t x, int8_t y, int8_t z);
+RelativeCellIndex findCellByIndices(Body* body, int8_t x, int8_t y, int8_t z);
 
-void checkForPulse(Body *body, Cell* me);
+void checkForPulse(Body *body, RelativeCellIndex me);
 
-void diffuse(Body *body, Cell *me);
+void diffuse(Body *body, RelativeCellIndex me);
 
-void checkForSpeciation(Body *body, Cell* me);
+void checkForSpeciation(Body *body, RelativeCellIndex me);
 
-void checkForSpawn(Body *body, Cell* me);
+void checkForSpawn(Body *body, RelativeCellIndex me);
 
 //Erases the uncoding bits in directions, returns 0 for working genomes and -1 for defective ones.
 int sanitizeGenome(Genome_t *genome);
