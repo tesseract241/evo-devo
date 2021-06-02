@@ -193,19 +193,19 @@ void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int8_t intensi
 }
 
 
-void checkForSpeciation(Body *body, Cell* me){
+void checkForSpeciation(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int16_t threshold = (body->genome.autosome[me->type].gene[i].changeThreshold) << 8;
+        int16_t threshold = (body->genome.autosome[(body->cells + me)->type].gene[i].changeThreshold) << 8;
         if(threshold==0) continue;
         if(threshold>0){
-            if(me->fields[i] > threshold){
-                me->type = body->genome.autosome[me->type].gene[i].nextType;
+            if((body->cells + me)->fields[i] > threshold){
+                (body->cells + me)->type = body->genome.autosome[(body->cells + me)->type].gene[i].nextType;
                 break;
             }
         }
         else{
-            if(me->fields[i] < threshold){
-                me->type = body->genome.autosome[me->type].gene[i].nextType;
+            if((body->cells + me)->fields[i] < threshold){
+                (body->cells + me)->type = body->genome.autosome[(body->cells + me)->type].gene[i].nextType;
                 break;
             }
         }
