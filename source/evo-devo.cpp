@@ -32,10 +32,10 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
         delete body->cells;
         body->cells=temp;
     }
-    Cell *cell = &(body->cells[body->currentOccupation]);
+    Cell *cell = &(body->cells[body->currentOccupation-1]);
     uint8_t dummy[4] = {type, uint8_t(x), uint8_t(y), uint8_t(z)};
     std::memcpy(&(cell->type), dummy, 4);
-    body->indicesToCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = body->currentOccupation;
+    body->indicesToCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = body->currentOccupation-1;
     return cell;
 }
 
@@ -67,7 +67,7 @@ void generateGenome(Genome_t *genome){
 
 void initializeBody(Body *body, const Genome_t& genome){
     body->cells= new Cell[16];
-    body->currentOccupation=-1;
+    body->currentOccupation=0;
     body->currentSize=16;
     body->indicesToCell.reserve(16);
     body->genome = genome;
@@ -78,7 +78,7 @@ void reuseBody(Body *body, const Genome_t& genome){
     if(!(body->cells)){
         initializeBody(body, genome);
     } else{
-        body->currentOccupation = -1;
+        body->currentOccupation = 0;
         body->genome = genome;
         newCell(body, 0, 0, 0, 0);
     }
