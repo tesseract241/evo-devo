@@ -129,7 +129,7 @@ Cell* spawnCell(Body *body, Cell *parent, Direction d){
 
     Cell *child= newCell(body, parent->type, indices[0], indices[1], indices[2]);
     child->type = parent->type;
-    *(&(child->up)+(d^1)) = parent;
+    *(&(child->right)+(d^1)) = parent;
     for(int i=0;i<=BACK;++i){
         int16_t neighbourIndices[3] = {indices[0], indices[1], indices[2]};
         if(i!=(d^1)){
@@ -142,14 +142,14 @@ Cell* spawnCell(Body *body, Cell *parent, Direction d){
                 }
             }
             if(!skip){
-                *(&(child->up)+i)=findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
+                *(&(child->right)+i)=findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
             }
         }
     }
 
     for(int i=0;i<fieldsNumber;++i){
         for(int j=0;j<=BACK;++j){
-            Cell* neighbour = *(&(child->up)+j);
+            Cell* neighbour = *(&(child->right)+j);
             if(neighbour){
                 child->fields[i] += neighbour->fields[i];
             }
@@ -166,13 +166,13 @@ void pulseField(Cell* me, int fieldIndex, int16_t intensity, Direction d){
    //The -1 is due to us skipping the cell the pulse is coming from
     uint8_t neighboursCount = -1;
     for(int i=0;i<=BACK;++i){
-        if(*(&(me->up)+i)) ++neighboursCount;
+        if(*(&(me->right)+i)) ++neighboursCount;
     }
    for(int i=0;i<=BACK;++i){
-       if(*(&(me->up)+i)){
+       if(*(&(me->right)+i)){
            //This if condition prevents infinite back-propagation
             if(i!=(d^1)){
-                pulseField(me->up+i, fieldIndex, intensity/neighboursCount, (Direction) i);
+                pulseField(me->right+i, fieldIndex, intensity/neighboursCount, (Direction) i);
             }
        }
    }
@@ -182,11 +182,11 @@ void pulseField(Cell* me, int fieldIndex, int8_t intensity){
     me->fields[fieldIndex] += intensity;
     uint8_t neighboursCount = 0;
     for(int i=0;i<=BACK;++i){
-        if(*(&(me->up)+i)) ++neighboursCount;
+        if(*(&(me->right)+i)) ++neighboursCount;
     }
     for(int i=0;i<=BACK;++i){
-       if(*(&(me->up)+i)){
-            pulseField(me->up+i, fieldIndex, intensity/neighboursCount, (Direction) i);
+       if(*(&(me->right)+i)){
+            pulseField(me->right+i, fieldIndex, intensity/neighboursCount, (Direction) i);
         }
     }
 }
@@ -224,7 +224,7 @@ void checkForSpawn(Body *body, Cell* me){
     for(int i=0;i<fieldsNumber;++i){
         Direction d = body->genome.autosome[me->type].gene[i].direction;
         //We only spawn new cells in empty spaces
-        if(!*(&(me->up)+d)){
+        if(!*(&(me->right)+d)){
             int16_t threshold = (body->genome.autosome[me->type].gene[i].spawnThreshold) << 8;
             if(threshold==0) continue;
             if(threshold>0){
@@ -248,7 +248,7 @@ void diffuse(Body *body, Cell *me){
         uint8_t myPermeability = body->genome.autosome[me->type].gene[i].permeability;
         uint8_t mass = body->genome.allosome.mass[i];
         for(uint8_t j=0;j<=BACK;++j){
-            Cell* neighbour = *(&(me->up)+j);
+            Cell* neighbour = *(&(me->right)+j);
             if(neighbour){
                 uint8_t theirPermeability = body->genome.autosome[neighbour->type].gene[i].permeability;
                 //We divide by 4 instead of 2 because diffusion will happen again when called for the neighbour
