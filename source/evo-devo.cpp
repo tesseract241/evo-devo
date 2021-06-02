@@ -173,7 +173,7 @@ void pulseField(Cell* me, int fieldIndex, int16_t intensity, Direction d){
        if(*(&(me->right)+i)){
            //This if condition prevents infinite back-propagation
             if(i!=(d^1)){
-                pulseField(me->right+i, fieldIndex, intensity/neighboursCount, (Direction) i);
+                pulseField(*((&(me->right)+i)), fieldIndex, intensity/neighboursCount, (Direction) i);
             }
        }
    }
@@ -187,7 +187,7 @@ void pulseField(Cell* me, int fieldIndex, int8_t intensity){
     }
     for(int i=0;i<=BACK;++i){
        if(*(&(me->right)+i)){
-            pulseField(me->right+i, fieldIndex, intensity/neighboursCount, (Direction) i);
+            pulseField(*(&(me->right)+i), fieldIndex, intensity/neighboursCount, (Direction) i);
         }
     }
 }
