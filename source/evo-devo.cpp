@@ -31,6 +31,7 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
         std::memcpy(temp, body->cells, (body->currentOccupation)*sizeof(Cell));
         delete body->cells;
         body->cells=temp;
+        body->currentSize*=2;
     }
     Cell *cell = &(body->cells[body->currentOccupation-1]);
     uint8_t dummy[4] = {type, uint8_t(x), uint8_t(y), uint8_t(z)};
