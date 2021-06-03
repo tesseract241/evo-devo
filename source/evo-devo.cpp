@@ -43,7 +43,7 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
         neighbourIndices[(i&6)>>1]-= (i&1)*2 - 1;
         bool skip = false;
         for(int j=0;j<3;++j){
-            if(neighbourIndices[i]<INT8_MIN || neighbourIndices[i]> INT8_MAX){
+            if(neighbourIndices[j]<INT8_MIN || neighbourIndices[j]> INT8_MAX){
                 skip = true;
                 break;
             }
