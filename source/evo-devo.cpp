@@ -65,7 +65,7 @@ void generateGenome(Genome_t *genome){
     std::uniform_int_distribution<uint64_t> dis64(0, UINT64_MAX);
     std::uniform_int_distribution<uint32_t> dis32(0, UINT32_MAX);
     std::uniform_int_distribution<uint8_t> dist(0, cellsTypes-1);
-    std::uniform_int_distribution<uint8_t> dis8(0, UINT8_MAX);
+    std::uniform_int_distribution<uint8_t> dis8(1, UINT8_MAX);
     std::uniform_int_distribution<uint8_t> disd(0, 7);
     div_t div = std::div(fieldsNumber, sizeof(uint64_t));
     for(int i=0;i<cellsTypes;++i){
@@ -249,15 +249,20 @@ void diffuse(Body *body, RelativeCellIndex me){
         int16_t myField = body->cells[me].fields[i];
         //We save the current state of this cell's permeability so that we can do the exchanges serially
         uint8_t myPermeability = body->genome.autosome[body->cells[me].type].gene[i].permeability;
+        if(myPermeability==0){
+            return;
+        }
         uint8_t mass = body->genome.allosome.mass[i];
         for(uint8_t j=0;j<=BACK;++j){
             RelativeCellIndex neighbour = body->cells[me].neighbours[j];
             if(neighbour!=-1){
                 uint8_t theirPermeability = body->genome.autosome[body->cells[neighbour].type].gene[i].permeability;
-                //We divide by 4 instead of 2 because diffusion will happen again when called for the neighbour
-                int16_t fieldDelta = (myPermeability*myField - theirPermeability*body->cells[neighbour].fields[i])/(2*myPermeability*theirPermeability*mass);
+                if(theirPermeability){
+                    //We divide by 4 instead of 2 because diffusion will happen again when called for the neighbour
+                    int16_t fieldDelta = (myPermeability*myField - theirPermeability*body->cells[neighbour].fields[i])/(2*myPermeability*theirPermeability*mass);
                     body->cells[me].fields[i]+=fieldDelta;
                     body->cells[neighbour].fields[i]-=fieldDelta;
+                }
             }
         }
     }
@@ -293,6 +298,7 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
     std::uniform_real_distribution<float> prob(0, 1);
     std::uniform_int_distribution<uint8_t> dist(0, cellsTypes-1);
     std::uniform_int_distribution<uint8_t> dis8(0, 7);
+    std::uniform_int_distribution<uint8_t> dism(1, 7);
     std::uniform_int_distribution<uint8_t> disb(0, 1);
     for(int i=0;i<cellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
@@ -316,7 +322,7 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
     }
     for(int i=0;i<fieldsNumber;++i){
         if(prob(gen)<mutationProbability){
-            genome->allosome.mass[i]^=(1<<dis8(gen));
+            genome->allosome.mass[i]^=(1<<dism(gen));
         }
     }
 }
