@@ -49,7 +49,11 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
             }
         }
         if(!skip){
-            cell->neighbours[i]=findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
+            RelativeCellIndex neighbour = findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
+            if(neighbour!=-1){
+                cell->neighbours[i]=neighbour;
+                body->cells[neighbour].neighbours[i^1] = cell - body->cells;
+            }
         }
     }
     return cell;
@@ -120,7 +124,7 @@ void deleteBody(Body *body){
 }
 
 Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
-    int16_t indices[3] = {(body->cells + parent)->indices[0], (body->cells + parent)->indices[1], (body->cells + parent)->indices[2]};
+    int16_t indices[3] = {body->cells[parent].indices[0], body->cells[parent].indices[1], body->cells[parent].indices[2]};
     //If the direction is relative (INWARDS/OUTWARDS) we need to describe it as an absolute direction
     //by looking at which coordinate is the greatest in absolute value
     if(d&OUTWARDS){
@@ -143,14 +147,14 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
         }
     }
 
-    Cell *child= newCell(body, (body->cells + parent)->type, indices[0], indices[1], indices[2]);
+    Cell *child= newCell(body, body->cells[parent].type, indices[0], indices[1], indices[2]);
     child->neighbours[d^1] = parent;
 
     for(int i=0;i<fieldsNumber;++i){
         for(int j=0;j<=BACK;++j){
             RelativeCellIndex neighbour = child->neighbours[j];
             if(neighbour!=-1){
-                child->fields[i] += (body->cells + neighbour)->fields[i];
+                child->fields[i] += body->cells[neighbour].fields[i];
             }
         }
     }
@@ -158,34 +162,34 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
 }
 
 void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int16_t intensity, Direction d){
-   (body->cells + me)->fields[fieldIndex]+=intensity;
+   body->cells[me].fields[fieldIndex]+=intensity;
    if(intensity<2){
         return;
    }
    //The -1 is due to us skipping the cell the pulse is coming from
     uint8_t neighboursCount = -1;
     for(int i=0;i<=BACK;++i){
-        if((body->cells + me)->neighbours[i]!=-1) ++neighboursCount;
+        if(body->cells[me].neighbours[i]!=-1) ++neighboursCount;
     }
    for(int i=0;i<=BACK;++i){
-       if((body->cells + me)->neighbours[i]!=-1){
+       if(body->cells[me].neighbours[i]!=-1){
            //This if condition prevents infinite back-propagation
             if(i!=(d^1)){
-                pulseField(body, (body->cells + me)->neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
+                pulseField(body, body->cells[me].neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
             }
        }
    }
 }
 
 void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int8_t intensity){
-    (body->cells + me)->fields[fieldIndex] += intensity;
+    body->cells[me].fields[fieldIndex] += intensity;
     uint8_t neighboursCount = 0;
     for(int i=0;i<=BACK;++i){
-        if((body->cells + me)->neighbours[i]!=-1) ++neighboursCount;
+        if(body->cells[me].neighbours[i]!=-1) ++neighboursCount;
     }
     for(int i=0;i<=BACK;++i){
-       if((body->cells + me)->neighbours[i]!=-1){
-            pulseField(body, (body->cells + me)->neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
+       if(body->cells[me].neighbours[i]!=-1){
+            pulseField(body, body->cells[me].neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
         }
     }
 }
@@ -193,17 +197,17 @@ void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int8_t intensi
 
 void checkForSpeciation(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int16_t threshold = (body->genome.autosome[(body->cells + me)->type].gene[i].changeThreshold) << 8;
+        int16_t threshold = (body->genome.autosome[body->cells[me].type].gene[i].changeThreshold) << 8;
         if(threshold==0) continue;
         if(threshold>0){
-            if((body->cells + me)->fields[i] > threshold){
-                (body->cells + me)->type = body->genome.autosome[(body->cells + me)->type].gene[i].nextType;
+            if(body->cells[me].fields[i] > threshold){
+                body->cells[me].type = body->genome.autosome[body->cells[me].type].gene[i].nextType;
                 break;
             }
         }
         else{
-            if((body->cells + me)->fields[i] < threshold){
-                (body->cells + me)->type = body->genome.autosome[(body->cells + me)->type].gene[i].nextType;
+            if(body->cells[me].fields[i] < threshold){
+                body->cells[me].type = body->genome.autosome[body->cells[me].type].gene[i].nextType;
                 break;
             }
         }
@@ -212,7 +216,7 @@ void checkForSpeciation(Body *body, RelativeCellIndex me){
 
 void checkForPulse(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int8_t amplitude = body->genome.autosome[(body->cells + me)->type].gene[i].amplitude;
+        int8_t amplitude = body->genome.autosome[body->cells[me].type].gene[i].amplitude;
         if(amplitude){
             pulseField(body, me, i, amplitude);
         }
@@ -221,18 +225,18 @@ void checkForPulse(Body *body, RelativeCellIndex me){
 
 void checkForSpawn(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        Direction d = body->genome.autosome[(body->cells + me)->type].gene[i].direction;
+        Direction d = body->genome.autosome[body->cells[me].type].gene[i].direction;
         //We only spawn new cells in empty spaces
-        if((body->cells + me)->neighbours[d]==-1){
-            int16_t threshold = (body->genome.autosome[(body->cells + me)->type].gene[i].spawnThreshold) << 8;
+        if(body->cells[me].neighbours[d]==-1){
+            int16_t threshold = (body->genome.autosome[body->cells[me].type].gene[i].spawnThreshold) << 8;
             if(threshold==0) continue;
             if(threshold>0){
-                if((body->cells + me)->fields[i] > threshold){
+                if(body->cells[me].fields[i] > threshold){
                     spawnCell(body, me, d);
                 }
             }
             else{
-                if((body->cells + me)->fields[i] < threshold){
+                if(body->cells[me].fields[i] < threshold){
                     spawnCell(body, me, d);
                 }
             }
@@ -242,18 +246,18 @@ void checkForSpawn(Body *body, RelativeCellIndex me){
 
 void diffuse(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int16_t myField = (body->cells + me)->fields[i];
+        int16_t myField = body->cells[me].fields[i];
         //We save the current state of this cell's permeability so that we can do the exchanges serially
-        uint8_t myPermeability = body->genome.autosome[(body->cells + me)->type].gene[i].permeability;
+        uint8_t myPermeability = body->genome.autosome[body->cells[me].type].gene[i].permeability;
         uint8_t mass = body->genome.allosome.mass[i];
         for(uint8_t j=0;j<=BACK;++j){
-            RelativeCellIndex neighbour = (body->cells + me)->neighbours[j];
+            RelativeCellIndex neighbour = body->cells[me].neighbours[j];
             if(neighbour!=-1){
-                uint8_t theirPermeability = body->genome.autosome[(body->cells + neighbour)->type].gene[i].permeability;
+                uint8_t theirPermeability = body->genome.autosome[body->cells[neighbour].type].gene[i].permeability;
                 //We divide by 4 instead of 2 because diffusion will happen again when called for the neighbour
-                int16_t fieldDelta = (myPermeability*myField - theirPermeability*(body->cells + neighbour)->fields[i])/(2*myPermeability*theirPermeability*mass);
-                    (body->cells + me)->fields[i]+=fieldDelta;
-                    (body->cells + neighbour)->fields[i]-=fieldDelta;
+                int16_t fieldDelta = (myPermeability*myField - theirPermeability*body->cells[neighbour].fields[i])/(2*myPermeability*theirPermeability*mass);
+                    body->cells[me].fields[i]+=fieldDelta;
+                    body->cells[neighbour].fields[i]-=fieldDelta;
             }
         }
     }
