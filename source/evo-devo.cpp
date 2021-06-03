@@ -159,7 +159,7 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
 
 void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int16_t intensity, Direction d){
    (body->cells + me)->fields[fieldIndex]+=intensity;
-   if(intensity==1){
+   if(intensity<2){
         return;
    }
    //The -1 is due to us skipping the cell the pulse is coming from
