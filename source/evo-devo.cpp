@@ -37,9 +37,7 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
     uint8_t dummy[4] = {type, uint8_t(x), uint8_t(y), uint8_t(z)};
     std::memcpy(&(cell->type), dummy, 4);
     body->indicesToCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = body->currentOccupation-1;
-    for(int i=0;i<=BACK;++i){
-        *(&(cell->right)+i)=-1;
-    }
+    std::memset(cell->neighbours, -1, 6*sizeof(RelativeCellIndex));
     for(int i=0;i<=BACK;++i){
         int16_t neighbourIndices[3] = {x, y, z};
         neighbourIndices[(i&6)>>1]-= (i&1)*2 - 1;
@@ -51,7 +49,7 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
             }
         }
         if(!skip){
-            *(&(cell->right)+i)=findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
+            cell->neighbours[i]=findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
         }
     }
     return cell;
@@ -146,11 +144,11 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
     }
 
     Cell *child= newCell(body, (body->cells + parent)->type, indices[0], indices[1], indices[2]);
-    *(&(child->right)+(d^1)) = parent;
+    child->neighbours[d^1] = parent;
 
     for(int i=0;i<fieldsNumber;++i){
         for(int j=0;j<=BACK;++j){
-            RelativeCellIndex neighbour = *(&(child->right)+j);
+            RelativeCellIndex neighbour = child->neighbours[j];
             if(neighbour!=-1){
                 child->fields[i] += (body->cells + neighbour)->fields[i];
             }
@@ -167,13 +165,13 @@ void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int16_t intens
    //The -1 is due to us skipping the cell the pulse is coming from
     uint8_t neighboursCount = -1;
     for(int i=0;i<=BACK;++i){
-        if(*(&((body->cells + me)->right)+i)!=-1) ++neighboursCount;
+        if((body->cells + me)->neighbours[i]!=-1) ++neighboursCount;
     }
    for(int i=0;i<=BACK;++i){
-       if(*(&((body->cells + me)->right)+i)!=-1){
+       if((body->cells + me)->neighbours[i]!=-1){
            //This if condition prevents infinite back-propagation
             if(i!=(d^1)){
-                pulseField(body, *((&((body->cells + me)->right)+i)), fieldIndex, intensity/neighboursCount, (Direction) i);
+                pulseField(body, (body->cells + me)->neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
             }
        }
    }
@@ -183,11 +181,11 @@ void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int8_t intensi
     (body->cells + me)->fields[fieldIndex] += intensity;
     uint8_t neighboursCount = 0;
     for(int i=0;i<=BACK;++i){
-        if(*(&((body->cells + me)->right)+i)!=-1) ++neighboursCount;
+        if((body->cells + me)->neighbours[i]!=-1) ++neighboursCount;
     }
     for(int i=0;i<=BACK;++i){
-       if(*(&((body->cells + me)->right)+i)!=-1){
-            pulseField(body, *(&((body->cells + me)->right)+i), fieldIndex, intensity/neighboursCount, (Direction) i);
+       if((body->cells + me)->neighbours[i]!=-1){
+            pulseField(body, (body->cells + me)->neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
         }
     }
 }
@@ -225,7 +223,7 @@ void checkForSpawn(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
         Direction d = body->genome.autosome[(body->cells + me)->type].gene[i].direction;
         //We only spawn new cells in empty spaces
-        if(!*(&((body->cells + me)->right)+d)){
+        if((body->cells + me)->neighbours[d]==-1){
             int16_t threshold = (body->genome.autosome[(body->cells + me)->type].gene[i].spawnThreshold) << 8;
             if(threshold==0) continue;
             if(threshold>0){
@@ -249,7 +247,7 @@ void diffuse(Body *body, RelativeCellIndex me){
         uint8_t myPermeability = body->genome.autosome[(body->cells + me)->type].gene[i].permeability;
         uint8_t mass = body->genome.allosome.mass[i];
         for(uint8_t j=0;j<=BACK;++j){
-            RelativeCellIndex neighbour = *(&((body->cells + me)->right)+j);
+            RelativeCellIndex neighbour = (body->cells + me)->neighbours[j];
             if(neighbour!=-1){
                 uint8_t theirPermeability = body->genome.autosome[(body->cells + neighbour)->type].gene[i].permeability;
                 //We divide by 4 instead of 2 because diffusion will happen again when called for the neighbour

@@ -40,12 +40,7 @@ struct Genome_t{
 
 struct Cell {
     //6*8 bytes = 48 bytes
-     RelativeCellIndex right;
-     RelativeCellIndex left;
-     RelativeCellIndex up;
-     RelativeCellIndex down;
-     RelativeCellIndex forward;
-     RelativeCellIndex back;
+    RelativeCellIndex neighbours[6];
     
     //4*1 bytes = 4 bytes
     uint8_t type;
