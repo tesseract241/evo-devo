@@ -20,7 +20,7 @@ RelativeCellIndex findCellByIndices(Body* body, int8_t x, int8_t y, int8_t z){
     if(neighbour!=body->indicesToCell.end()){
         return neighbour->second;
     } else{
-        return 0;
+        return -1;
     }
 }
 
