@@ -123,7 +123,7 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
     int16_t indices[3] = {(body->cells + parent)->indices[0], (body->cells + parent)->indices[1], (body->cells + parent)->indices[2]};
     //If the direction is relative (INWARDS/OUTWARDS) we need to describe it as an absolute direction
     //by looking at which coordinate is the greatest in absolute value
-    if(d&6){
+    if(d&OUTWARDS){
         uint8_t max = 0;
         Direction newDirection;
         for(int i=0;i<3;++i){
