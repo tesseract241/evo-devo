@@ -51,8 +51,9 @@ struct Cell {
 };
 
 struct Body{
-    int currentOccupation;
-    int currentSize;
+    uint64_t currentOccupation;
+    uint64_t currentSize;
+    uint64_t maxCells;
     Cell *cells;
     Genome_t genome;
     std::unordered_map<uint32_t, uint32_t> indicesToCell;
@@ -60,7 +61,7 @@ struct Body{
 
 void generateGenome(Genome_t *genome);
 
-void initializeBody(Body *body, const Genome_t& genome);
+void initializeBody(Body *body, const Genome_t& genome, uint64_t number = UINT8_MAX*UINT8_MAX*UINT8_MAX/4);
 
 void reuseBody(Body *body, const Genome_t& genome);
 

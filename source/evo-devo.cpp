@@ -85,13 +85,16 @@ void generateGenome(Genome_t *genome){
     }
 }
 
-void initializeBody(Body *body, const Genome_t& genome){
-    body->cells= new Cell[16];
-    body->currentOccupation=0;
-    body->currentSize=16;
-    body->indicesToCell.reserve(16);
-    body->genome = genome;
-    newCell(body, 0, 0, 0, 0);
+void initializeBody(Body *body, const Genome_t& genome, uint64_t maxNumber){
+    if(maxNumber!=0){
+        body->maxCells = maxNumber;
+        body->cells= new Cell[16];
+        body->currentOccupation=0;
+        body->currentSize=16;
+        body->indicesToCell.reserve(16);
+        body->genome = genome;
+        newCell(body, 0, 0, 0, 0);
+    }
 }
 
 void reuseBody(Body *body, const Genome_t& genome){
@@ -291,17 +294,19 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
 }
 
 void developBody(Body* body){
-    for(int i=0;i<body->currentOccupation;++i){
+    for(uint64_t i=0;i<body->currentOccupation;++i){
         checkForFieldsSources(body, i);
     }
-    for(int i=0;i<body->currentOccupation;++i){
+    for(uint64_t i=0;i<body->currentOccupation;++i){
         diffuse(body, i);
     }
-    for(int i=0;i<body->currentOccupation;++i){
+    for(uint64_t i=0;i<body->currentOccupation;++i){
         checkForSpeciation(body, i);
     }
-    for(int i=0;i<body->currentOccupation;++i){
-        checkForSpawn(body, i);
+    for(uint64_t i=0;i<body->currentOccupation;++i){
+        if(body->currentOccupation<body->maxCells){
+            checkForSpawn(body, i);
+        }
     }
 }
 
