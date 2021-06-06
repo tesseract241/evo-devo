@@ -161,40 +161,6 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
     return child;
 }
 
-void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int16_t intensity, Direction d){
-   body->cells[me].fields[fieldIndex]+=intensity;
-   if(intensity<2){
-        return;
-   }
-   //The -1 is due to us skipping the cell the pulse is coming from
-    uint8_t neighboursCount = -1;
-    for(int i=0;i<=BACK;++i){
-        if(body->cells[me].neighbours[i]!=-1) ++neighboursCount;
-    }
-   for(int i=0;i<=BACK;++i){
-       if(body->cells[me].neighbours[i]!=-1){
-           //This if condition prevents infinite back-propagation
-            if(i!=(d^1)){
-                pulseField(body, body->cells[me].neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
-            }
-       }
-   }
-}
-
-void pulseField(Body *body, RelativeCellIndex me, int fieldIndex, int8_t intensity){
-    body->cells[me].fields[fieldIndex] += intensity;
-    uint8_t neighboursCount = 0;
-    for(int i=0;i<=BACK;++i){
-        if(body->cells[me].neighbours[i]!=-1) ++neighboursCount;
-    }
-    for(int i=0;i<=BACK;++i){
-       if(body->cells[me].neighbours[i]!=-1){
-            pulseField(body, body->cells[me].neighbours[i], fieldIndex, intensity/neighboursCount, (Direction) i);
-        }
-    }
-}
-
-
 void checkForSpeciation(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
         int16_t threshold = (body->genome.autosome[body->cells[me].type].gene[i].changeThreshold) << 8;
@@ -214,12 +180,9 @@ void checkForSpeciation(Body *body, RelativeCellIndex me){
     }
 }
 
-void checkForPulse(Body *body, RelativeCellIndex me){
+inline void checkForFieldsSources(Body *body, RelativeCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int8_t amplitude = body->genome.autosome[body->cells[me].type].gene[i].amplitude;
-        if(amplitude){
-            pulseField(body, me, i, amplitude);
-        }
+        body->cells[me].fields[i]+=body->genome.autosome[body->cells[me].type].gene[i].amplitude;
     }
 }
 
@@ -329,7 +292,7 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
 
 void developBody(Body* body){
     for(int i=0;i<body->currentOccupation;++i){
-        checkForPulse(body, i);
+        checkForFieldsSources(body, i);
     }
     for(int i=0;i<body->currentOccupation;++i){
         diffuse(body, i);
