@@ -61,7 +61,7 @@ struct Body{
 
 void generateGenome(Genome_t *genome);
 
-void initializeBody(Body *body, const Genome_t& genome, uint64_t number = UINT8_MAX*UINT8_MAX*UINT8_MAX/4);
+void initializeBody(Body *body, const Genome_t& genome, uint64_t maxNumber = UINT8_MAX*UINT8_MAX*UINT8_MAX/4);
 
 void reuseBody(Body *body, const Genome_t& genome);
 
