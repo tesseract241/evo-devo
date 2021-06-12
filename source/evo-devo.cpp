@@ -80,8 +80,8 @@ void generateGenome(Genome_t *genome){
         uint64_t *ptr = (uint64_t*)(genome->allosome.mass+i*sizeof(uint64_t));
         *ptr = dis64(gen);
     }
-    for(int i=0;i<div.rem;++i){
-        genome->allosome.mass[div.quot*sizeof(uint64_t)+i] = dis8(gen);
+    for(int i=0;i<fieldsNumber;++i){
+        genome->allosome.mass[i] = dis8(gen);
     }
 }
 
