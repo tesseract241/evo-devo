@@ -7,7 +7,7 @@ const int cellsTypes    = 32;
 
 typedef int64_t RelativeCellIndex; 
 
-enum Direction{
+enum Direction : uint8_t{
     RIGHT       = 0,    //0000
     LEFT        = 1,    //0001
     UP          = 2,    //0010
