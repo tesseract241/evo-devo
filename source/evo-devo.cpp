@@ -279,10 +279,12 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
             }
             if(prob(gen)<mutationProbability){
                 uint8_t currentDirection = genome->autosome[i].gene[j].direction;
+                //We want the direction to move one step from where it is, either forward or backward depending on the binary random number
+                //To do this, we use the directions array and the modulus operation. Notice that when going out of bounds this cycles back to the other side
                 if(currentDirection>7){
                     currentDirection-=2;
                 }
-                genome->autosome[i].gene[j].direction = directions[(currentDirection+2*disb(gen)-1)%8];
+                genome->autosome[i].gene[j].direction = directions[(currentDirection+2*disb(gen)+7)%8];
             }
         }
     }
