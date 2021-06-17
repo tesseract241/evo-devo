@@ -15,29 +15,29 @@ const Direction directions[8] = {
          INWARDS
 };
 
-RelativeCellIndex findCellByIndices(Body* body, int8_t x, int8_t y, int8_t z){
-    auto neighbour = body->indicesToCell.find((uint8_t(z)<<16) | (uint8_t(y)<<8) | uint8_t(x));
-    if(neighbour!=body->indicesToCell.end()){
+RelativeStemCellIndex findStemCellByIndices(Embryo* embryo, int8_t x, int8_t y, int8_t z){
+    auto neighbour = embryo->indicesToStemCell.find((uint8_t(z)<<16) | (uint8_t(y)<<8) | uint8_t(x));
+    if(neighbour!=embryo->indicesToStemCell.end()){
         return neighbour->second;
     } else{
         return -1;
     }
 }
 
-Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
-    body->currentOccupation++;
-    if(body->currentOccupation>=body->currentSize){
-        Cell *temp = new Cell[2*body->currentSize];
-        std::memcpy(temp, body->cells, (body->currentOccupation)*sizeof(Cell));
-        delete body->cells;
-        body->cells=temp;
-        body->currentSize*=2;
+StemCell* newStemCell(Embryo *embryo, uint8_t type, int8_t x, int8_t y, int8_t z){
+    embryo->currentOccupation++;
+    if(embryo->currentOccupation>=embryo->currentSize){
+        StemCell *temp = new StemCell[2*embryo->currentSize];
+        std::memcpy(temp, embryo->stemCells, (embryo->currentOccupation)*sizeof(StemCell));
+        delete embryo->stemCells;
+        embryo->stemCells=temp;
+        embryo->currentSize*=2;
     }
-    Cell *cell = &(body->cells[body->currentOccupation-1]);
+    StemCell *stemCell = &(embryo->stemCells[embryo->currentOccupation-1]);
     uint8_t dummy[4] = {type, uint8_t(x), uint8_t(y), uint8_t(z)};
-    std::memcpy(&(cell->type), dummy, 4);
-    body->indicesToCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = body->currentOccupation-1;
-    std::memset(cell->neighbours, -1, 6*sizeof(RelativeCellIndex));
+    std::memcpy(&(stemCell->type), dummy, 4);
+    embryo->indicesToStemCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = embryo->currentOccupation-1;
+    std::memset(stemCell->neighbours, -1, 6*sizeof(RelativeStemCellIndex));
     for(int i=0;i<=BACK;++i){
         int16_t neighbourIndices[3] = {x, y, z};
         neighbourIndices[(i&6)>>1]-= (i&1)*2 - 1;
@@ -49,14 +49,14 @@ Cell* newCell(Body *body, uint8_t type, int8_t x, int8_t y, int8_t z){
             }
         }
         if(!skip){
-            RelativeCellIndex neighbour = findCellByIndices(body, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
+            RelativeStemCellIndex neighbour = findStemCellByIndices(embryo, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
             if(neighbour!=-1){
-                cell->neighbours[i]=neighbour;
-                body->cells[neighbour].neighbours[i^1] = cell - body->cells;
+                stemCell->neighbours[i]=neighbour;
+                embryo->stemCells[neighbour].neighbours[i^1] = stemCell - embryo->stemCells;
             }
         }
     }
-    return cell;
+    return stemCell;
 }
 
 void generateGenome(Genome_t *genome){
@@ -64,11 +64,11 @@ void generateGenome(Genome_t *genome){
     std::mt19937 gen(rd()); 
     std::uniform_int_distribution<uint64_t> dis64(0, UINT64_MAX);
     std::uniform_int_distribution<uint32_t> dis32(0, UINT32_MAX);
-    std::uniform_int_distribution<uint8_t> dist(0, cellsTypes-1);
+    std::uniform_int_distribution<uint8_t> dist(0, stemCellsTypes-1);
     std::uniform_int_distribution<uint8_t> dis8(1, UINT8_MAX);
     std::uniform_int_distribution<uint8_t> disd(0, 7);
     div_t div = std::div(fieldsNumber, sizeof(uint64_t));
-    for(int i=0;i<cellsTypes;++i){
+    for(int i=0;i<stemCellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
             uint32_t *ptr = (uint32_t*)(genome->autosome[i].gene + j);
             *ptr = dis32(gen);
@@ -85,49 +85,49 @@ void generateGenome(Genome_t *genome){
     }
 }
 
-void initializeBody(Body *body, const Genome_t& genome, uint64_t maxNumber){
+void initializeEmbryo(Embryo *embryo, const Genome_t& genome, uint64_t maxNumber){
     if(maxNumber!=0){
-        body->maxCells = maxNumber;
-        body->cells= new Cell[16];
-        body->currentOccupation=0;
-        body->currentSize=16;
-        body->indicesToCell.reserve(16);
-        body->genome = genome;
-        newCell(body, 0, 0, 0, 0);
+        embryo->maxStemCells = maxNumber;
+        embryo->stemCells= new StemCell[16];
+        embryo->currentOccupation=0;
+        embryo->currentSize=16;
+        embryo->indicesToStemCell.reserve(16);
+        embryo->genome = genome;
+        newStemCell(embryo, 0, 0, 0, 0);
     }
 }
 
-void reuseBody(Body *body, const Genome_t& genome){
-    if(!(body->cells)){
-        initializeBody(body, genome);
+void reuseEmbryo(Embryo *embryo, const Genome_t& genome){
+    if(!(embryo->stemCells)){
+        initializeEmbryo(embryo, genome);
     } else{
-        body->currentOccupation = 0;
-        body->genome = genome;
-        newCell(body, 0, 0, 0, 0);
+        embryo->currentOccupation = 0;
+        embryo->genome = genome;
+        newStemCell(embryo, 0, 0, 0, 0);
     }
 }
 
-void copyBody(Body* dest, Body* src){
+void copyEmbryo(Embryo* dest, const Embryo* src){
     if(dest->currentSize < src->currentSize){
-        delete dest->cells;
-        dest->cells = new Cell[src->currentSize];
+        delete dest->stemCells;
+        dest->stemCells = new StemCell[src->currentSize];
     }
-    std::memcpy(dest->cells, src->cells, src->currentOccupation * sizeof(Cell));
+    std::memcpy(dest->stemCells, src->stemCells, src->currentOccupation * sizeof(StemCell));
     dest->currentOccupation = src->currentOccupation;
     dest->currentSize = src->currentSize;
     std::memcpy(&(dest->genome), &(src->genome), sizeof(Genome_t));
-    dest->indicesToCell = src->indicesToCell;
+    dest->indicesToStemCell = src->indicesToStemCell;
 }
 
-void deleteBody(Body *body){
-    delete body->cells;
-    body->currentOccupation=0;
-    body->currentSize=0;
-    body->indicesToCell.clear();
+void deleteEmbryo(Embryo *embryo){
+    delete embryo->stemCells;
+    embryo->currentOccupation=0;
+    embryo->currentSize=0;
+    embryo->indicesToStemCell.clear();
 }
 
-Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
-    int16_t indices[3] = {body->cells[parent].indices[0], body->cells[parent].indices[1], body->cells[parent].indices[2]};
+StemCell* spawnStemCell(Embryo *embryo, RelativeStemCellIndex parent, Direction d){
+    int16_t indices[3] = {embryo->stemCells[parent].indices[0], embryo->stemCells[parent].indices[1], embryo->stemCells[parent].indices[2]};
     //If the direction is relative (INWARDS/OUTWARDS) we need to describe it as an absolute direction
     //by looking at which coordinate is the greatest in absolute value
     if(d&OUTWARDS){
@@ -150,84 +150,84 @@ Cell* spawnCell(Body *body, RelativeCellIndex parent, Direction d){
         }
     }
 
-    Cell *child= newCell(body, body->cells[parent].type, indices[0], indices[1], indices[2]);
+    StemCell *child= newStemCell(embryo, embryo->stemCells[parent].type, indices[0], indices[1], indices[2]);
     child->neighbours[d^1] = parent;
 
     for(int i=0;i<fieldsNumber;++i){
         for(int j=0;j<=BACK;++j){
-            RelativeCellIndex neighbour = child->neighbours[j];
+            RelativeStemCellIndex neighbour = child->neighbours[j];
             if(neighbour!=-1){
-                child->fields[i] += body->cells[neighbour].fields[i];
+                child->fields[i] += embryo->stemCells[neighbour].fields[i];
             }
         }
     }
     return child;
 }
 
-void checkForSpeciation(Body *body, RelativeCellIndex me){
+void checkForSpeciation(Embryo *embryo, RelativeStemCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int16_t threshold = (body->genome.autosome[body->cells[me].type].gene[i].changeThreshold) << 8;
+        int16_t threshold = (embryo->genome.autosome[embryo->stemCells[me].type].gene[i].changeThreshold) << 8;
         if(threshold==0) continue;
         if(threshold>0){
-            if(body->cells[me].fields[i] > threshold){
-                body->cells[me].type = body->genome.autosome[body->cells[me].type].gene[i].nextType;
+            if(embryo->stemCells[me].fields[i] > threshold){
+                embryo->stemCells[me].type = embryo->genome.autosome[embryo->stemCells[me].type].gene[i].nextType;
                 break;
             }
         }
         else{
-            if(body->cells[me].fields[i] < threshold){
-                body->cells[me].type = body->genome.autosome[body->cells[me].type].gene[i].nextType;
+            if(embryo->stemCells[me].fields[i] < threshold){
+                embryo->stemCells[me].type = embryo->genome.autosome[embryo->stemCells[me].type].gene[i].nextType;
                 break;
             }
         }
     }
 }
 
-inline void checkForFieldsSources(Body *body, RelativeCellIndex me){
+inline void checkForFieldsSources(Embryo *embryo, RelativeStemCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        body->cells[me].fields[i]+=body->genome.autosome[body->cells[me].type].gene[i].amplitude;
+        embryo->stemCells[me].fields[i]+=embryo->genome.autosome[embryo->stemCells[me].type].gene[i].amplitude;
     }
 }
 
-void checkForSpawn(Body *body, RelativeCellIndex me){
+void checkForSpawn(Embryo *embryo, RelativeStemCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        Direction d = body->genome.autosome[body->cells[me].type].gene[i].direction;
-        //We only spawn new cells in empty spaces
-        if(body->cells[me].neighbours[d]==-1){
-            int16_t threshold = (body->genome.autosome[body->cells[me].type].gene[i].spawnThreshold) << 8;
+        Direction d = embryo->genome.autosome[embryo->stemCells[me].type].gene[i].direction;
+        //We only spawn new stemCells in empty spaces
+        if(embryo->stemCells[me].neighbours[d]==-1){
+            int16_t threshold = (embryo->genome.autosome[embryo->stemCells[me].type].gene[i].spawnThreshold) << 8;
             if(threshold==0) continue;
             if(threshold>0){
-                if(body->cells[me].fields[i] > threshold){
-                    spawnCell(body, me, d);
+                if(embryo->stemCells[me].fields[i] > threshold){
+                    spawnStemCell(embryo, me, d);
                 }
             }
             else{
-                if(body->cells[me].fields[i] < threshold){
-                    spawnCell(body, me, d);
+                if(embryo->stemCells[me].fields[i] < threshold){
+                    spawnStemCell(embryo, me, d);
                 }
             }
         }
     }
 }
 
-void diffuse(Body *body, RelativeCellIndex me){
+void diffuse(Embryo *embryo, RelativeStemCellIndex me){
     for(int i=0;i<fieldsNumber;++i){
-        int16_t myField = body->cells[me].fields[i];
-        //We save the current state of this cell's permeability so that we can do the exchanges serially
-        uint8_t myPermeability = body->genome.autosome[body->cells[me].type].gene[i].permeability;
+        int16_t myField = embryo->stemCells[me].fields[i];
+        //We save the current state of this stemCell's permeability so that we can do the exchanges serially
+        uint8_t myPermeability = embryo->genome.autosome[embryo->stemCells[me].type].gene[i].permeability;
         if(myPermeability==0){
             return;
         }
-        uint8_t mass = body->genome.allosome.mass[i];
+        uint8_t mass = embryo->genome.allosome.mass[i];
         for(uint8_t j=0;j<=BACK;++j){
-            RelativeCellIndex neighbour = body->cells[me].neighbours[j];
+            RelativeStemCellIndex neighbour = embryo->stemCells[me].neighbours[j];
             if(neighbour!=-1){
-                uint8_t theirPermeability = body->genome.autosome[body->cells[neighbour].type].gene[i].permeability;
+                uint8_t theirPermeability = embryo->genome.autosome[embryo->stemCells[neighbour].type].gene[i].permeability;
                 if(theirPermeability){
                     //We divide by 4 instead of 2 because diffusion will happen again when called for the neighbour
-                    int16_t fieldDelta = (myPermeability*myField - theirPermeability*body->cells[neighbour].fields[i])/(2*myPermeability*theirPermeability*mass);
-                    body->cells[me].fields[i]+=fieldDelta;
-                    body->cells[neighbour].fields[i]-=fieldDelta;
+                    int16_t fieldDelta = (myPermeability*myField - theirPermeability*embryo->stemCells[neighbour].fields[i])/(2*myPermeability*theirPermeability*mass);
+                    embryo->stemCells[me].fields[i]+=fieldDelta;
+                    embryo->stemCells[neighbour].fields[i]-=fieldDelta;
                 }
             }
         }
@@ -235,7 +235,7 @@ void diffuse(Body *body, RelativeCellIndex me){
 }
 
 int sanitizeGenome(Genome_t *genome){
-    for(int i=0;i<cellsTypes;++i){
+    for(int i=0;i<stemCellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
             //Turns off the non-coding bits
             genome->autosome[i].gene[j].direction = (Direction) (genome->autosome[i].gene[j].direction&15);
@@ -247,10 +247,10 @@ int sanitizeGenome(Genome_t *genome){
             }
         }
     }
-    for(int i=0;i<cellsTypes;++i){
+    for(int i=0;i<stemCellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
             //Checks if nextType is one of the ones available
-            if(genome->autosome[i].gene[j].nextType>cellsTypes-1){
+            if(genome->autosome[i].gene[j].nextType>stemCellsTypes-1){
                 return -1;
             }
         }
@@ -262,11 +262,11 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
     std::random_device rd;  
     std::mt19937 gen(rd()); 
     std::uniform_real_distribution<float> prob(0, 1);
-    std::uniform_int_distribution<uint8_t> dist(0, cellsTypes-1);
+    std::uniform_int_distribution<uint8_t> dist(0, stemCellsTypes-1);
     std::uniform_int_distribution<uint8_t> dis8(0, 7);
     std::uniform_int_distribution<uint8_t> dism(1, 7);
     std::uniform_int_distribution<uint8_t> disb(0, 1);
-    for(int i=0;i<cellsTypes;++i){
+    for(int i=0;i<stemCellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
             uint8_t *ptr = (uint8_t*) &(genome->autosome[i].gene[j]);
             for(int k=0;k<4;++k){
@@ -295,26 +295,53 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
     }
 }
 
-void developBody(Body* body){
-    for(uint64_t i=0;i<body->currentOccupation;++i){
-        checkForFieldsSources(body, i);
+void developEmbryo(Embryo* embryo){
+    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+        checkForFieldsSources(embryo, i);
     }
-    for(uint64_t i=0;i<body->currentOccupation;++i){
-        diffuse(body, i);
+    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+        diffuse(embryo, i);
     }
-    for(uint64_t i=0;i<body->currentOccupation;++i){
-        checkForSpeciation(body, i);
+    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+        checkForSpeciation(embryo, i);
     }
-    for(uint64_t i=0;i<body->currentOccupation;++i){
-        if(body->currentOccupation<body->maxCells){
-            checkForSpawn(body, i);
+    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+        if(embryo->currentOccupation<embryo->maxStemCells){
+            checkForSpawn(embryo, i);
         }
     }
 }
 
+void birthBody(const Embryo& embryo, Body* body){
+    if(!body->cells){
+        body->cells = new Cell[embryo.currentOccupation];
+        body->size = embryo.currentOccupation;
+    } else {
+        if(body->size < embryo.currentOccupation){
+            delete body->cells;
+            body->cells = new Cell[embryo.currentOccupation];
+            body->size = embryo.currentOccupation;
+        }
+    }
+    for(uint64_t i=0;i<embryo.currentOccupation;++i){
+        std::memcpy(body->cells + i, embryo.stemCells + i, 4);
+    }
+    body->occupation = embryo.currentOccupation;
+}
+
+void copyBody(Body* dest, const Body* src){
+    if(dest->size < src->occupation){
+        delete dest->cells;
+        dest->cells = new Cell[src->occupation];
+    }
+    std::memcpy(dest->cells, src->cells, src->occupation * sizeof(Cell));
+    dest->occupation = src->occupation;
+    dest->size = dest->occupation;
+}
+
 int geneticDistance(const Genome_t& first, const Genome_t& second){
     int sum = 0;
-    for(int i=0;i<cellsTypes;++i){
+    for(int i=0;i<stemCellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
             sum+=(first.autosome[i].gene[j].permeability - second.autosome[i].gene[j].permeability)*(first.autosome[i].gene[j].permeability - second.autosome[i].gene[j].permeability);
             sum+=(first.autosome[i].gene[j].amplitude - second.autosome[i].gene[j].amplitude)*(first.autosome[i].gene[j].amplitude - second.autosome[i].gene[j].amplitude);
