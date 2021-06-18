@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include<unordered_map>
+#include <unordered_map>
 
 const int fieldsNumber  = 14;   //We want a multiple of 4 + 2 to make the StemCell struct tightly packed
 const int stemCellsTypes    = 32;
@@ -56,7 +56,7 @@ struct Embryo{
     uint64_t maxStemCells;
     StemCell *stemCells;
     Genome_t genome;
-    std::unordered_map<uint32_t, uint32_t> indicesToStemCell;
+    std::unordered_map<uint32_t, RelativeStemCellIndex> indicesToStemCell;
 };
 
 struct Cell{
