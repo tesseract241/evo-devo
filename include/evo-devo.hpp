@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <unordered_map>
 
-const int fieldsNumber  = 14;   //We want a multiple of 4 + 2 to make the StemCell struct tightly packed
+const int fieldsNumber      = 16;   
 const int stemCellsTypes    = 32;
 
 typedef int64_t RelativeStemCellIndex; 
@@ -25,16 +25,18 @@ struct Genome_t{
     struct {
         //Each gene contains the amplitude that the stemCell generates for its field, which type it will transition to if exposed to this field, and the threshold above/below which the transition happens, the direction to spawn a new stemCell, and the threshold associated with it
         struct {
+            int8_t      pulseThreshold;     // threshold to generate a field pulse
             uint8_t     permeability;       // permeability to this field
             int8_t      amplitude;          // intensity of the field pulse generated
             int8_t      changeThreshold;    // threshold to instigate the transition
             int8_t      spawnThreshold;     // threshold to spawn a new stemCell
+            uint8_t     fieldType;          // which field the pulse should be of
             uint8_t     nextType;           // type to transition to
             Direction   direction;          // direction in which to spawn a new stemCell
         } gene[fieldsNumber];
     } autosome[stemCellsTypes];
     struct{
-        uint8_t mass[fieldsNumber];         // mass of the field, determines its dynamics
+        int16_t initialFieldValues[fieldsNumber];         // the initial values of the fields in the first cell
     } allosome;
 };
 
@@ -84,7 +86,8 @@ RelativeStemCellIndex findStemCellByIndices(Embryo* embryo, int8_t x, int8_t y, 
 
 void checkForFieldsSources(Embryo *embryo, RelativeStemCellIndex me);
 
-void diffuse(Embryo *embryo, RelativeStemCellIndex me);
+
+void diffuse(Embryo *embryo, RelativeStemCellIndex me, RelativeStemCellIndex previous);
 
 void checkForSpeciation(Embryo *embryo, RelativeStemCellIndex me);
 
@@ -95,9 +98,9 @@ int sanitizeGenome(Genome_t *genome);
 
 void mutateGenome(Genome_t *genome, float mutationProbability);
 
-//Executes a complete cycle of pulse field -> diffuse -> speciation -> spawn for all StemCells in the embryo
+//Executes a complete cycle of check for sources-> diffuse -> speciation -> spawn for all StemCells in the embryo
 //You shouldn't need to use the individual functions in most cases
-void developEmbryo(Embryo* embryo);
+void developEmbryo(Embryo* embryo, uint8_t range=2);
 
 void birthBody(const Embryo& embryo, Body* body);
 
