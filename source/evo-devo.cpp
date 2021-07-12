@@ -38,7 +38,9 @@ StemCell* newStemCell(Embryo *embryo, uint8_t type, int8_t x, int8_t y, int8_t z
     uint8_t dummy[4] = {type, uint8_t(x), uint8_t(y), uint8_t(z)};
     std::memcpy(&(stemCell->type), dummy, 4);
     embryo->indicesToStemCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = embryo->currentOccupation-1;
-    std::memset(stemCell->neighbours, -1, 6*sizeof(RelativeStemCellIndex));
+    for(int i=0;i<6;++i){
+        stemCell->neighbours[i] = -1;
+    }
     for(int i=0;i<=BACK;++i){
         int16_t neighbourIndices[3] = {x, y, z};
         neighbourIndices[(i&6)>>1]-= (i&1)*2 - 1;
@@ -227,30 +229,6 @@ void checkForSpawn(Embryo *embryo, RelativeStemCellIndex me){
     }
 }
 
-//void diffuse(Embryo *embryo, RelativeStemCellIndex me, int field, uint8_t range, RelativeStemCellIndex previous){
-//    uint8_t myPermeability = embryo->genome.autosome[embryo->stemCells[me].type].gene[field].permeability;
-//    if(myPermeability==0){
-//        return;
-//    }
-//    int16_t myField = embryo->stemCells[me].fields[field];
-//    //We save the current state of this stemCell's field so that we can do the exchanges serially
-//    for(uint8_t j=0;j<=BACK;++j){
-//        RelativeStemCellIndex neighbour = embryo->stemCells[me].neighbours[j];
-//        if(neighbour==-1) continue;
-//        uint8_t theirPermeability = embryo->genome.autosome[embryo->stemCells[neighbour].type].gene[field].permeability;
-//        //We check that the permeability is not zero, that the neighbour is not the stemCell we come from and not in the list of sources for this field
-//        if(theirPermeability && neighbour!=previous){
-//            auto neighbourIterator = embryo->sources.find(neighbour);
-//            if(neighbourIterator!=embryo->sources.end() && (neighbourIterator->second&(1<<field))){
-//                int16_t fieldDelta = (myPermeability*myField - theirPermeability*embryo->stemCells[neighbour].fields[field])/(2*(myPermeability+theirPermeability));
-//                embryo->stemCells[me].fields[field]+=fieldDelta;
-//                embryo->stemCells[neighbour].fields[field]-=fieldDelta;
-//                if(range!=1) diffuse(embryo, neighbour, field, range-1, me);
-//            }
-//        }
-//    }
-//}
-
 void diffuse(Embryo *embryo, RelativeStemCellIndex me, RelativeStemCellIndex previous){
     for(int i=0;i<fieldsNumber;++i){
         uint8_t myPermeability = embryo->genome.autosome[embryo->stemCells[me].type].gene[i].permeability;
@@ -338,13 +316,13 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
     }
 }
 
-void developEmbryo(Embryo* embryo, uint8_t range){
+void developEmbryo(Embryo* embryo){
     for(uint64_t i=0;i<embryo->currentOccupation;++i){
         checkForFieldsSources(embryo, i);
     }
-        for(uint64_t i=0;i<embryo->currentOccupation;++i){
-            diffuse(embryo, i, -1);
-        }
+    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+        diffuse(embryo, i, -1);
+    }
     for(uint64_t i=0;i<embryo->currentOccupation;++i){
         checkForSpeciation(embryo, i);
     }

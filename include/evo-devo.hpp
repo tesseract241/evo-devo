@@ -86,7 +86,6 @@ RelativeStemCellIndex findStemCellByIndices(Embryo* embryo, int8_t x, int8_t y, 
 
 void checkForFieldsSources(Embryo *embryo, RelativeStemCellIndex me);
 
-
 void diffuse(Embryo *embryo, RelativeStemCellIndex me, RelativeStemCellIndex previous);
 
 void checkForSpeciation(Embryo *embryo, RelativeStemCellIndex me);
@@ -100,7 +99,7 @@ void mutateGenome(Genome_t *genome, float mutationProbability);
 
 //Executes a complete cycle of check for sources-> diffuse -> speciation -> spawn for all StemCells in the embryo
 //You shouldn't need to use the individual functions in most cases
-void developEmbryo(Embryo* embryo, uint8_t range=2);
+void developEmbryo(Embryo* embryo);
 
 void birthBody(const Embryo& embryo, Body* body);
 
