@@ -105,11 +105,13 @@ void initializeEmbryo(Embryo *embryo, const Genome_t& genome, uint64_t maxNumber
 }
 
 void reuseEmbryo(Embryo *embryo, const Genome_t& genome){
+    embryo->indicesToStemCell.clear();
     if(!(embryo->stemCells)){
         initializeEmbryo(embryo, genome);
     } else{
         embryo->currentOccupation = 0;
         embryo->genome = genome;
+        embryo->indicesToStemCell.reserve(16);
         newStemCell(embryo, 0, 0, 0, 0);
         std::memcpy(embryo->stemCells[0].fields, genome.allosome.initialFieldValues, fieldsNumber*sizeof(int16_t));
     }
