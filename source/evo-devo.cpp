@@ -93,16 +93,15 @@ void generateGenome(Genome_t *genome){
 }
 
 void initializeEmbryo(Embryo *embryo, const Genome_t& genome, uint64_t maxNumber){
-    if(maxNumber!=0){
-        embryo->maxStemCells = maxNumber;
-        embryo->stemCells= new StemCell[16];
-        embryo->currentOccupation=0;
-        embryo->currentSize=16;
-        embryo->indicesToStemCell.reserve(16);
-        embryo->genome = genome;
-        newStemCell(embryo, 0, 0, 0, 0);
-        std::memcpy(embryo->stemCells[0].fields, genome.allosome.initialFieldValues, fieldsNumber*sizeof(int16_t));
-    }
+    assert(maxNumber!=0 && "initializeEmbryo called with maxNumber=0, it needs at least one cell\n");
+    embryo->maxStemCells = maxNumber;
+    embryo->stemCells= new StemCell[16];
+    embryo->currentOccupation=0;
+    embryo->currentSize=16;
+    embryo->indicesToStemCell.reserve(16);
+    embryo->genome = genome;
+    newStemCell(embryo, 0, 0, 0, 0);
+    std::memcpy(embryo->stemCells[0].fields, genome.allosome.initialFieldValues, fieldsNumber*sizeof(int16_t));
 }
 
 void reuseEmbryo(Embryo *embryo, const Genome_t& genome){
@@ -130,6 +129,7 @@ void copyEmbryo(Embryo* dest, const Embryo* src){
 
 void deleteEmbryo(Embryo *embryo){
     delete embryo->stemCells;
+    embryo->stemCells = 0;
     embryo->currentOccupation=0;
     embryo->currentSize=0;
     embryo->indicesToStemCell.clear();
