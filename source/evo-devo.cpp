@@ -285,7 +285,6 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
     std::uniform_int_distribution<uint8_t>  disft(0, fieldsNumber-1);
     std::uniform_int_distribution<uint8_t>  dis8 (0, 7);
     std::uniform_int_distribution<uint8_t>  disf (0, 15);
-    std::uniform_int_distribution<uint8_t>  disb (0, 1);
     for(int i=0;i<stemCellsTypes;++i){
         for(int j=0;j<fieldsNumber;++j){
             uint8_t *ptr = (uint8_t*) &(genome->autosome[i].gene[j]);
@@ -301,13 +300,7 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
                 genome->autosome[i].gene[j].nextType = dist(gen);
             }
             if(prob(gen)<mutationProbability){
-                uint8_t currentDirection = genome->autosome[i].gene[j].direction;
-                //We want the direction to move one step from where it is, either forward or backward depending on the binary random number
-                //To do this, we use the directions array and the modulus operation. Notice that when going out of bounds this cycles back to the other side
-                if(currentDirection>7){
-                    currentDirection-=2;
-                }
-                genome->autosome[i].gene[j].direction = directions[(currentDirection+2*disb(gen)+7)%8];
+                genome->autosome[i].gene[j].direction = directions[dis8(gen)];
             }
         }
     }
