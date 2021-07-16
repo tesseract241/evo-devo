@@ -162,7 +162,6 @@ StemCell* spawnStemCell(Embryo *embryo, RelativeStemCellIndex parent, Direction 
     }
 
     StemCell *child= newStemCell(embryo, embryo->stemCells[parent].type, indices[0], indices[1], indices[2]);
-    child->neighbours[d^1] = parent;
 
     for(int i=0;i<fieldsNumber;++i){
         for(int j=0;j<=BACK;++j){
