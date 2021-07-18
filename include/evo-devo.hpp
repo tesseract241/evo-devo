@@ -5,7 +5,7 @@
 const int fieldsNumber      = 16;   
 const int stemCellsTypes    = 32;
 
-typedef int64_t RelativeStemCellIndex; 
+typedef int32_t RelativeStemCellIndex; 
 
 enum Direction : uint8_t{
     RIGHT       = 0,    //0000
@@ -53,9 +53,9 @@ struct StemCell {
 };
 
 struct Embryo{
-    uint64_t currentOccupation;
+    uint32_t currentOccupation;
     uint64_t currentSize;
-    uint64_t maxStemCells;
+    uint32_t maxStemCells;
     StemCell *stemCells;
     Genome_t genome;
     std::unordered_map<uint32_t, RelativeStemCellIndex> indicesToStemCell;

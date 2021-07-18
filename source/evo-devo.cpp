@@ -17,7 +17,7 @@ const Direction directions[8] = {
 };
 
 RelativeStemCellIndex findStemCellByIndices(Embryo* embryo, int8_t x, int8_t y, int8_t z){
-    auto neighbour = embryo->indicesToStemCell.find((uint8_t(z)<<16) | (uint8_t(y)<<8) | uint8_t(x));
+    auto neighbour = embryo->indicesToStemCell.find((uint32_t(z)<<16) | (uint32_t(y)<<8) | uint32_t(x));
     if(neighbour!=embryo->indicesToStemCell.end()){
         return neighbour->second;
     } else{
@@ -37,7 +37,7 @@ StemCell* newStemCell(Embryo *embryo, uint8_t type, int8_t x, int8_t y, int8_t z
     StemCell *stemCell = &(embryo->stemCells[embryo->currentOccupation-1]);
     uint8_t dummy[4] = {type, uint8_t(x), uint8_t(y), uint8_t(z)};
     std::memcpy(&(stemCell->type), dummy, 4);
-    embryo->indicesToStemCell[(uint8_t(z)<<16)|(uint8_t(y)<<8)|uint8_t(x)] = embryo->currentOccupation-1;
+    embryo->indicesToStemCell[(uint32_t(z)<<16)|(uint32_t(y)<<8)|uint32_t(x)] = embryo->currentOccupation-1;
     for(int i=0;i<6;++i){
         stemCell->neighbours[i] = -1;
     }
