@@ -68,8 +68,7 @@ struct Cell{
 
 struct Body{
     Cell* cells;
-    uint64_t occupation;
-    uint64_t size;
+    uint32_t size;
 };
 
 void generateGenome(Genome_t *genome);

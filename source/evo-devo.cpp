@@ -341,17 +341,15 @@ void birthBody(const Embryo& embryo, Body* body){
     for(uint64_t i=0;i<embryo.currentOccupation;++i){
         std::memcpy(body->cells + i, embryo.stemCells + i, 4);
     }
-    body->occupation = embryo.currentOccupation;
 }
 
 void copyBody(Body* dest, const Body* src){
-    if(dest->size < src->occupation){
+    if(dest->size < src->size){
         delete dest->cells;
-        dest->cells = new Cell[src->occupation];
+        dest->cells = new Cell[src->size];
     }
-    std::memcpy(dest->cells, src->cells, src->occupation * sizeof(Cell));
-    dest->occupation = src->occupation;
-    dest->size = dest->occupation;
+    std::memcpy(dest->cells, src->cells, src->size * sizeof(Cell));
+    dest->size = dest->size;
 }
 
 int geneticDistance(const Genome_t& first, const Genome_t& second){
