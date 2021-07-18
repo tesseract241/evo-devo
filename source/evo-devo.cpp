@@ -55,7 +55,7 @@ StemCell* newStemCell(Embryo *embryo, uint8_t type, int8_t x, int8_t y, int8_t z
             RelativeStemCellIndex neighbour = findStemCellByIndices(embryo, neighbourIndices[0], neighbourIndices[1], neighbourIndices[2]);
             if(neighbour!=-1){
                 stemCell->neighbours[i]=neighbour;
-                embryo->stemCells[neighbour].neighbours[i^1] = stemCell - embryo->stemCells;
+                embryo->stemCells[neighbour].neighbours[i^1] = embryo->currentOccupation-1;
             }
         }
     }
