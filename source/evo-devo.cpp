@@ -311,16 +311,17 @@ void mutateGenome(Genome_t *genome, float mutationProbability){
 }
 
 void developEmbryo(Embryo* embryo){
-    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+    uint64_t currentOccupation = embryo->currentOccupation;
+    for(uint64_t i=0;i<currentOccupation;++i){
         checkForFieldsSources(embryo, i);
     }
-    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+    for(uint64_t i=0;i<currentOccupation;++i){
         diffuse(embryo, i, -1);
     }
-    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+    for(uint64_t i=0;i<currentOccupation;++i){
         checkForSpeciation(embryo, i);
     }
-    for(uint64_t i=0;i<embryo->currentOccupation;++i){
+    for(uint64_t i=0;i<currentOccupation;++i){
         if(embryo->currentOccupation<embryo->maxStemCells){
             checkForSpawn(embryo, i);
         }
