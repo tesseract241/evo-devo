@@ -163,14 +163,7 @@ StemCell* spawnStemCell(Embryo *embryo, RelativeStemCellIndex parent, Direction 
 
     StemCell *child= newStemCell(embryo, embryo->stemCells[parent].type, indices[0], indices[1], indices[2]);
 
-    for(int i=0;i<fieldsNumber;++i){
-        for(int j=0;j<=BACK;++j){
-            RelativeStemCellIndex neighbour = child->neighbours[j];
-            if(neighbour!=-1){
-                child->fields[i] += embryo->stemCells[neighbour].fields[i];
-            }
-        }
-    }
+    memcpy(child->fields, embryo->stemCells[parent].fields, sizeof(int16_t)*fieldsNumber);
     return child;
 }
 
